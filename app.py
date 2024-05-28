@@ -1,7 +1,7 @@
 from linebot import LineBotApi, WebhookHandler
 # 需要額外載入對應的函示庫
 from linebot.models import PostbackAction,URIAction, MessageAction, TemplateSendMessage, ButtonsTemplate
-
+import os
 # 必須放上自己的Channel Access Token
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 
