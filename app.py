@@ -1,8 +1,7 @@
-from flask import Flask
-from linebot import LineBotApi
+from flask import Flask, request
+from linebot import LineBotApi, WebhookHandler
 from linebot.models import PostbackAction, URIAction, MessageAction, TemplateSendMessage, ButtonsTemplate
 import os
-
 
 app = Flask(__name__)
 
@@ -34,6 +33,12 @@ def push_message():
         )
     ))
     return 'Message sent!'
+
+@app.route('/callback', methods=['POST'])
+def callback():
+    # 在這裡處理 Line Bot 的回調請求
+    # 例如，解析請求內容，處理訊息等等
+    return 'OK'
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
