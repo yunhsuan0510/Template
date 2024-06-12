@@ -1,4 +1,4 @@
-import openai
+import openai, os
 
 from flask import Flask, request
 
