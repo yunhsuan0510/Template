@@ -1,6 +1,5 @@
 import openai
 
-from flask_ngrok import run_with_ngrok   # colab 使用，本機環境請刪除
 from flask import Flask, request
 
 # 載入 LINE Message API 相關函式庫
