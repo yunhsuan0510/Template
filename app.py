@@ -1,26 +1,50 @@
+import openai
+
+from flask_ngrok import run_with_ngrok   # colab 使用，本機環境請刪除
+from flask import Flask, request
+
+# 載入 LINE Message API 相關函式庫
 from linebot import LineBotApi, WebhookHandler
-# 需要額外載入對應的函示庫
-from linebot.models import PostbackAction,URIAction, MessageAction, TemplateSendMessage, ButtonsTemplate
-line_bot_api = LineBotApi('te/bzWwRmL8YVwG2nJdEUaaen2qBMvUDjvMxiWxylV3B5zt9Tto+N4IVKxMAB9uUG6yq4981CsitJ6IDTkFegFs8mmaYCw7bhFDgMA+2BJkqP3rrQKYTU1meE4QfcbyNgWbsYiY07EsYnh+YgXdMaQdB04t89/1O/w1cDnyilFU=')
-line_bot_api.push_message('Ueb0d6dea2a95c12fdf716b078d624834', TemplateSendMessage(
-    alt_text='ButtonsTemplate',
-    template=ButtonsTemplate(
-        thumbnail_image_url='https://steam.oxxostudio.tw/download/python/line-template-message-demo.jpg',
-        title='OXXO.STUDIO',
-        text='這是按鈕樣板',
-        actions=[
-            PostbackAction(
-                label='postback',
-                data='發送 postback'
-            ),
-            MessageAction(
-                label='說 hello',
-                text='hello'
-            ),
-            URIAction(
-                label='前往 STEAM 教育學習網',
-                uri='https://steam.oxxostudio.tw'
-            )
-        ]
-    )
-))
+from linebot.models import TextSendMessage   # 載入 TextSendMessage 模組
+import json
+
+app = Flask(__name__)
+
+@app.route("/", methods=['POST'])
+def linebot():
+    body = request.get_data(as_text=True)
+    json_data = json.loads(body)
+    print(json_data)
+    try:
+        line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
+        handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
+        signature = request.headers['X-Line-Signature']
+        handler.handle(body, signature)
+        tk = json_data['events'][0]['replyToken']
+        msg = json_data['events'][0]['message']['text']
+        # 取出文字的前五個字元，轉換成小寫
+        ai_msg = msg[:6].lower()
+        reply_msg = ''
+        # 取出文字的前五個字元是 hi ai:
+        if ai_msg == 'hi ai:':
+            openai.api_key = os.getenv("OPENAI_API_KEY")
+            # 將第六個字元之後的訊息發送給 OpenAI
+            response = openai.Completion.create(
+                model='text-davinci-003',
+                prompt=msg[6:],
+                max_tokens=256,
+                temperature=0.5,
+                )
+            # 接收到回覆訊息後，移除換行符號
+            reply_msg = response["choices"][0]["text"].replace('\n','')
+        else:
+            reply_msg = msg
+        text_message = TextSendMessage(text=reply_msg)
+        line_bot_api.reply_message(tk,text_message)
+    except:
+        print('error')
+    return 'OK'
+
+if __name__ == "__main__":
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
